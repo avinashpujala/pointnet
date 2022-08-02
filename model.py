@@ -81,7 +81,7 @@ class PointNet(pl.LightningModule):
         return y_hat, y_hat_node
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
-        loss = torch.Tensor([0])
+        loss = torch.Tensor([0]).to(self.device)
         for item in batch:
             x, y, y_node = item
             y_hat, y_hat_node = self.forward(x)
@@ -91,17 +91,34 @@ class PointNet(pl.LightningModule):
         self.log('train_loss', loss)
         return loss
 
+    def validation_step(self, batch, batch_idx):
+        loss = torch.Tensor([0]).to(self.device)
+        ys, y_nodes, y_hats, y_hat_nodes = [], [], [], []
+        for item in batch:
+            x, y, y_node = item
+            y_hat, y_hat_node = self.forward(x)
+            loss += torch.nn.functional.binary_cross_entropy(y_hat, y)
+            loss += torch.nn.functional.binary_cross_entropy(y_hat_node, y_node)
+            ys.append(y)
+            y_hats.append(y_hat)
+            y_nodes.append(y_node)
+            y_hat_nodes.append(y_node)
+        loss /= len(batch)
+        self.log('val_loss', loss)
+        return {'loss': loss, 'y': ys, 'y_hat': y_hats, 'y_node': y_nodes, 'y_hat_node': y_hat_nodes}
+
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=1e-3)
 
 
 if __name__ == '__main__':
+    torch.cuda.empty_cache()
     dataset = PointDataset('data/', noise=True)
     length = len(dataset)
     val_len = length // 10
     train_len = length - val_len
     train, val = random_split(dataset, [train_len, val_len])
     autoencoder = PointNet()
-    trainer = pl.Trainer()
-    trainer.fit(autoencoder, DataLoader(train, batch_size=32, collate_fn=collate_fn), DataLoader(val, batch_size=32,
-                                                                                                 collate_fn=collate_fn))
+    trainer = pl.Trainer(max_epochs=100)
+    trainer.fit(autoencoder, DataLoader(train, batch_size=32, collate_fn=collate_fn, num_workers=2),
+                DataLoader(val, batch_size=32, collate_fn=collate_fn, num_workers=2))
