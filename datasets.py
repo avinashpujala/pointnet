@@ -5,13 +5,19 @@ from random import random
 
 
 class PointDataset(Dataset):
-    def __init__(self, data_path, train=True, noise=False):
+    def __init__(self, data_path, train=True, test=False, noise=False):
         super(PointDataset, self).__init__()
         self.data_path = data_path
         self.metadata = pd.read_csv(data_path + 'metadata_modelnet10.csv')
         if train:
             self.metadata = self.metadata.loc[self.metadata.split == 'train']
             self.metadata.reset_index(inplace=True)
+        if test:
+            self.metadata = self.metadata.loc[self.metadata.split == 'test']
+            self.metadata.reset_index(inplace=True)
+        self.metadata = self.metadata.loc[self.metadata['class'] != '.DS']
+        self.metadata['object_path'] = self.metadata['object_path'].apply(lambda x: x.replace('night/',
+                                                                                              'night_stand/'))
         self.classes = {item: i for i, item in enumerate(list(self.metadata['class'].unique()))}
         self.noise = noise
 
