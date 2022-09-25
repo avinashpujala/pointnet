@@ -9,3 +9,6 @@
 
 # Checkpoints
 **/.ipynb_checkpoints
+
+# Scratch files
+**/scratch_*.*
