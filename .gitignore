@@ -1,4 +1,11 @@
-data
-lightning_logs
-.idea
-__pycache__
+# Data
+**/data
+
+# Logs and caches
+**/lightning_logs
+**/.idea
+**/__pycache__
+**/.vscode
+
+# Checkpoints
+**/.ipynb_checkpoints
