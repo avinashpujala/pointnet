@@ -12,3 +12,6 @@
 
 # Scratch files
 **/scratch_*.*
+
+# Eggs
+**/pointnet.egg-info/
